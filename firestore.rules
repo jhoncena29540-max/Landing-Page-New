@@ -13,11 +13,11 @@ service cloud.firestore {
         allow create, update, delete: if request.auth != null && request.auth.uid == userId;
         
         // Owner can list all their pages
-        // We separate 'list' from 'get' to avoid issues with queries that don't filter by isPublished
+        // This rule specifically allows collection queries where the path matches
         allow list: if request.auth != null && request.auth.uid == userId;
         
         // Allow get (single document read) if:
-        // 1. The user is the owner (authenticated and matches userId)
+        // 1. The user is the owner
         // 2. OR the page is published (publicly accessible)
         allow get: if (request.auth != null && request.auth.uid == userId) || 
                      (resource.data.isPublished == true);

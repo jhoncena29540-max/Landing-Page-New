@@ -4,23 +4,25 @@ service cloud.firestore {
     
     // User Profiles
     match /users/{userId} {
+      // Allow user to read/write their own profile
       allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Landing Pages Subcollection: /users/{userId}/landingPages/{pageId}
+      match /landingPages/{pageId} {
+        // Owner can perform all write operations (create, update, delete)
+        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+        
+        // Owner can list all their pages
+        // We separate 'list' from 'get' to avoid issues with queries that don't filter by isPublished
+        allow list: if request.auth != null && request.auth.uid == userId;
+        
+        // Allow get (single document read) if:
+        // 1. The user is the owner (authenticated and matches userId)
+        // 2. OR the page is published (publicly accessible)
+        allow get: if (request.auth != null && request.auth.uid == userId) || 
+                     (resource.data.isPublished == true);
+      }
     }
     
-    // Landing Pages
-    match /landingPages/{pageId} {
-      // Owners can create
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-      
-      // Owners can update and delete
-      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      
-      // GET: Allow if owner OR if published (for public view)
-      allow get: if request.auth != null && (resource.data.ownerId == request.auth.uid || resource.data.isPublished == true);
-      
-      // LIST: Strictly allow only if querying for own pages
-      // This matches the query: collection('landingPages').where('ownerId', '==', auth.uid)
-      allow list: if request.auth != null && resource.data.ownerId == request.auth.uid;
-    }
   }
 }

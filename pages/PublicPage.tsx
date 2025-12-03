@@ -4,22 +4,23 @@ import { getLandingPageById } from '../services/firebaseService';
 import { LandingPage } from '../types';
 
 const PublicPage: React.FC = () => {
-  const { pageId } = useParams();
+  // We need both userId and pageId to find the document in the subcollection
+  const { userId, pageId } = useParams();
   const [page, setPage] = useState<LandingPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (pageId) {
+    if (pageId && userId) {
       loadPage();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageId]);
+  }, [pageId, userId]);
 
   const loadPage = async () => {
     try {
-      if (!pageId) return;
-      const data = await getLandingPageById(pageId);
+      if (!pageId || !userId) return;
+      const data = await getLandingPageById(userId, pageId);
       
       // Only show if published
       if (data && data.isPublished) {

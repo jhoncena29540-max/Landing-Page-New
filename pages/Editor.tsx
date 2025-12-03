@@ -24,13 +24,14 @@ const Editor: React.FC<EditorProps> = ({ user, onToast }) => {
   }, [pageId, user]);
 
   const fetchPage = async () => {
-    if (!pageId) return;
+    if (!pageId || !user) return;
     try {
-      const data = await getLandingPageById(pageId);
-      if (data && data.ownerId === user.uid) {
+      // Pass user.uid because pages are now subcollections of the user
+      const data = await getLandingPageById(user.uid, pageId);
+      if (data) {
         setPage(data);
       } else {
-        onToast({ id: Date.now().toString(), type: 'error', message: 'Page not found or unauthorized' });
+        onToast({ id: Date.now().toString(), type: 'error', message: 'Page not found' });
         navigate('/dashboard');
       }
     } catch (error) {
@@ -45,7 +46,7 @@ const Editor: React.FC<EditorProps> = ({ user, onToast }) => {
     if (!page || !pageId) return;
     setPublishing(true);
     try {
-      const url = await publishLandingPage(pageId, user.uid);
+      const url = await publishLandingPage(user.uid, pageId);
       setPage({ ...page, isPublished: true, publicUrl: url });
       onToast({ id: Date.now().toString(), type: 'success', message: 'Page published successfully!' });
     } catch (error) {

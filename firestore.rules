@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User Profiles
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Landing Pages
+    match /landingPages/{pageId} {
+      // Owners can create
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      
+      // Owners can update and delete
+      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      
+      // GET: Allow if owner OR if published (for public view)
+      allow get: if request.auth != null && (resource.data.ownerId == request.auth.uid || resource.data.isPublished == true);
+      
+      // LIST: Strictly allow only if querying for own pages
+      // This matches the query: collection('landingPages').where('ownerId', '==', auth.uid)
+      allow list: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    }
+  }
+}
